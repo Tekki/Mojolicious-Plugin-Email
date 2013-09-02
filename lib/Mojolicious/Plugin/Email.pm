@@ -59,6 +59,10 @@ sub register {
 
       $header->{From}    ||= $conf->{from};
       $header->{Subject} ||= $self->stash('title');
+      unless ($header->{'Message-ID'}) {
+        $header->{From} =~ /@([^>]*)/;
+        $header->{'Message-ID'} = '<' . time . int(rand(1e16)). "\@$1>";
+      }
 
       if ($header->{BCC}) {
         my @to = (delete $header->{BCC});
