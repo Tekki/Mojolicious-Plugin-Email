@@ -8,24 +8,21 @@ use Email::MIME;
 use Email::Sender::Simple;
 use Email::Sender::Transport::Test;
 use Mojo::Loader;
-use Mojo::Util qw|encode decode|;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 my %mail_method = (
-  smtp => {
-    module => 'Email::Sender::Transport::SMTP',
-    params => {port => 25},
-  },
+  smtp =>
+    {module => 'Email::Sender::Transport::SMTP', params => {port => 25},},
   ssl => {
-    module => 'Email::Sender::Transport::SMTP',
-    params => {port => 465, ssl => 1},
+    module   => 'Email::Sender::Transport::SMTP',
+    params   => {port => 465, ssl => 1},
     username => 'sasl_username',
     password => 'sasl_password',
   },
   tls => {
-    module => 'Email::Sender::Transport::SMTP::TLS',
-    params => {port => 587},
+    module   => 'Email::Sender::Transport::SMTP::TLS',
+    params   => {port => 587},
     username => 'username',
     password => 'password',
   },
@@ -39,10 +36,10 @@ sub register {
   $app->helper(
     email => sub {
       my $self = shift;
-      my $args = @_ ? { @_ } : return;
+      my $args = @_ ? {@_} : return;
 
 
-      my @data  = @{ $args->{data} };
+      my @data = @{$args->{data}};
 
       my $format = $args->{format} || 'email';
       my %attributes = (
@@ -50,22 +47,18 @@ sub register {
         content_type => $args->{content_type} || 'text/html',
         encoding     => $args->{encoding}     || 'base64',
       );
-      my $body = $self->render(
-                                        @data,
-                                        format => $format,
-                                        partial => 1,
-                                  );
+      my $body = $self->render(@data, format => $format, partial => 1,);
 
       my $transport = &_get_transport($args, $conf);
       my $send_args = {transport => $transport};
 
-      my $header = { @{ $args->{header} } };
+      my $header = {@{$args->{header}}};
 
-      $header->{From}    ||= $conf->{from};
+      $header->{From} ||= $conf->{from};
       $header->{Subject} ||= $self->stash('title');
       unless ($header->{'Message-ID'}) {
         $header->{From} =~ /@([^>]*)/;
-        $header->{'Message-ID'} = '<' . time . int(rand(1e16)). "\@$1>";
+        $header->{'Message-ID'} = '<' . time . int(rand(1e16)) . "\@$1>";
       }
 
       if ($header->{BCC}) {
@@ -77,21 +70,17 @@ sub register {
       }
 
       my $email = Email::MIME->create(
-                                  header_str => [ %{$header} ],
-                                  attributes => \%attributes,
-                                  body   => $body
-                              );
+        header_str => [%{$header}],
+        attributes => \%attributes,
+        body       => $body
+      );
 
-      return Email::Sender::Simple->try_to_send( $email, $send_args ) if $transport;
+      return Email::Sender::Simple->try_to_send($email, $send_args)
+        if $transport;
 
       my $emailer = Email::Sender::Transport::Test->new;
-      $emailer->send_email(
-                  $email,
-                  {
-                    to   => [ $header->{To} ],
-                    from =>   $header->{From}
-                  }
-                );
+      $emailer->send_email($email,
+        {to => [$header->{To}], from => $header->{From}});
       return unless $emailer->{deliveries}->[0]->{successes}->[0];
 
     }
@@ -103,21 +92,25 @@ sub _get_transport {
   my $rv;
   for my $config (@_) {
     if ($config->{transport}) {
+
       # transport already defined
       $rv = $config->{transport};
       last;
 
     } elsif ($config->{host}) {
+
       # smart host
       my $method = $config->{method} || 'smtp';
-      my $def = $mail_method{$method} || die qq|Undefined mail method: $method|;
+      my $def = $mail_method{$method}
+        || die qq|Undefined mail method: $method|;
 
       # load module
       my $module = $def->{module};
-      my $e = Mojo::Loader->load($module);
+      my $e      = Mojo::Loader->load($module);
       die qq|Loading "$module" failed: $e| if ref $e;
 
       my $server_params = {host => $config->{host}};
+
       # authentication
       if ($def->{username}) {
         for (qw|username password|) {
@@ -127,13 +120,12 @@ sub _get_transport {
       }
 
       # other params
-      for (keys ($def->{params})) {
+      for (keys $def->{params}) {
         $server_params->{$_} = $config->{$_} || $def->{params}->{$_};
       }
 
       # create transport
       $rv = $module->new($server_params);
-
       last;
     }
   }
