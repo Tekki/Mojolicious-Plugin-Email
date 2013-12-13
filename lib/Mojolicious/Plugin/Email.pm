@@ -8,6 +8,7 @@ use Email::MIME;
 use Email::Sender::Simple;
 use Email::Sender::Transport::Test;
 use Mojo::Loader;
+use Mojo::Util qw|encode decode|;
 
 our $VERSION = '0.05';
 
@@ -44,13 +45,16 @@ sub register {
       my @data  = @{ $args->{data} };
 
       my $format = $args->{format} || 'email';
-      my @parts = Email::MIME->create(
-                    body => $self->render(
+      my %attributes = (
+        charset      => $args->{charset}      || 'UTF-8',
+        content_type => $args->{content_type} || 'text/html',
+        encoding     => $args->{encoding}     || 'base64',
+      );
+      my $body = $self->render(
                                         @data,
                                         format => $format,
                                         partial => 1,
-                                  )
-                  );
+                                  );
 
       my $transport = &_get_transport($args, $conf);
       my $send_args = {transport => $transport};
@@ -74,12 +78,9 @@ sub register {
 
       my $email = Email::MIME->create(
                                   header_str => [ %{$header} ],
-                                  parts  => [ @parts ],
+                                  attributes => \%attributes,
+                                  body   => $body
                               );
-
-      $email->charset_set     ( $args->{charset}      || 'utf8' );
-      $email->encoding_set    ( $args->{encoding}     || 'base64' );
-      $email->content_type_set( $args->{content_type} || 'text/html' );
 
       return Email::Sender::Simple->try_to_send( $email, $send_args ) if $transport;
 
