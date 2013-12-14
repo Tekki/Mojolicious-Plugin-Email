@@ -72,7 +72,7 @@ sub register {
       my $email = Email::MIME->create(
         header_str => [%{$header}],
         attributes => \%attributes,
-        body       => $body
+        body_str   => $body
       );
 
       return Email::Sender::Simple->try_to_send($email, $send_args)
