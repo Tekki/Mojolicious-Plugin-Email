@@ -45,7 +45,7 @@ sub register {
       my %attributes = (
         charset      => $args->{charset}      || 'UTF-8',
         content_type => $args->{content_type} || 'text/html',
-        encoding     => $args->{encoding}     || 'base64',
+        encoding     => $args->{encoding}     || 'quoted-printable',
       );
       my $body = $self->render(@data, format => $format, partial => 1,);
 
