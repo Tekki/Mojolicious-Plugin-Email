@@ -9,9 +9,13 @@ use Email::Sender::Simple;
 use Email::Sender::Transport::Test;
 use Mojo::Loader;
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 my %mail_method = (
+  sendmail => {
+    module => 'Email::Sender::Transport::Sendmail',
+    params => {sendmail => '/usr/sbin/sendmail'}
+  },
   smtp =>
     {module => 'Email::Sender::Transport::SMTP', params => {port => 25},},
   ssl => {
@@ -97,7 +101,7 @@ sub _get_transport {
       $rv = $config->{transport};
       last;
 
-    } elsif ($config->{host}) {
+    } elsif ($config->{host} || $config->{method}) {
 
       # smart host
       my $method = $config->{method} || 'smtp';
