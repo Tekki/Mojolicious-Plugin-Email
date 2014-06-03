@@ -51,7 +51,7 @@ sub register {
         content_type => $args->{content_type} || 'text/html',
         encoding     => $args->{encoding}     || 'quoted-printable',
       );
-      my $body = $self->render(@data, format => $format, partial => 1,);
+      my $body = $self->render_to_string(@data, format => $format,);
 
       my $transport = &_get_transport($args, $conf);
       my $send_args = {transport => $transport};
