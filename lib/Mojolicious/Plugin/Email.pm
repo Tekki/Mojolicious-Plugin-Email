@@ -124,7 +124,7 @@ sub _get_transport {
       }
 
       # other params
-      for (keys $def->{params}) {
+      for (keys %{$def->{params}}) {
         $server_params->{$_} = $config->{$_} || $def->{params}->{$_};
       }
 
