@@ -110,7 +110,7 @@ sub _get_transport {
 
       # load module
       my $module = $def->{module};
-      my $e      = Mojo::Loader->load($module);
+      my $e      = Mojo::Loader::load_class($module);
       die qq|Loading "$module" failed: $e| if ref $e;
 
       my $server_params = {host => $config->{host}};
